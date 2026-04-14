@@ -1,231 +1,124 @@
-// ===== Game Logic =====
-
 class Game {
     constructor(uiController) {
         this.ui = uiController;
-        
-        // Состояние игры
         this.coins = 0;
         this.energy = CONFIG.MAX_ENERGY;
+        this.maxEnergy = CONFIG.MAX_ENERGY;
+        this.totalTaps = 0;
         this.walletConnected = false;
+        this.stage = CONFIG.EVOLUTION_STAGES[0];
         
-        // Таймеры
-        this.regenInterval = null;
+        console.log('🎮 Game создан, загружаем данные...');
+        this.load();
+        this.ui.updateAllUI(this.getState());
+        console.log('📊 Начальное состояние:', this.getState());
+    }
+    
+    getState() {
+        return {
+            coins: this.coins,
+            energy: this.energy,
+            maxEnergy: this.maxEnergy,
+            totalTaps: this.totalTaps,
+            stage: this.stage,
+            walletConnected: this.walletConnected
+        };
+    }
+    
+    handleTap() {
+        console.log('💥 handleTap, энергия:', this.energy);
         
-        // Загрузка сохранённых данных
-        this.loadFromStorage();
-    }
-    
-    // Загрузка из localStorage (временно, пока нет бэкенда)
-    loadFromStorage() {
-        try {
-            const savedCoins = localStorage.getItem(STORAGE_KEYS.COINS);
-            const savedEnergy = localStorage.getItem(STORAGE_KEYS.ENERGY);
-            const lastUpdate = localStorage.getItem(STORAGE_KEYS.LAST_UPDATE);
-            const walletConnected = localStorage.getItem(STORAGE_KEYS.WALLET_CONNECTED);
-            
-            if (savedCoins !== null) {
-                this.coins = parseInt(savedCoins, 10) || 0;
-            }
-            
-            if (savedEnergy !== null) {
-                this.energy = parseInt(savedEnergy, 10) || CONFIG.MAX_ENERGY;
-            } else {
-                this.energy = CONFIG.MAX_ENERGY;
-            }
-            
-            // Восстановление энергии за время отсутствия
-            if (lastUpdate) {
-                const timePassed = Date.now() - parseInt(lastUpdate, 10);
-                const energyToRegen = Math.floor(timePassed / CONFIG.ENERGY_REGEN_INTERVAL) 
-                                     * CONFIG.ENERGY_REGEN_AMOUNT;
-                this.energy = Math.min(CONFIG.MAX_ENERGY, this.energy + energyToRegen);
-            }
-            
-            this.walletConnected = walletConnected === 'true';
-        } catch (e) {
-            console.warn('Не удалось загрузить данные из localStorage:', e);
-        }
-        
-        this.clampValues();
-    }
-    
-    // Сохранение в localStorage
-    saveToStorage() {
-        try {
-            localStorage.setItem(STORAGE_KEYS.COINS, this.coins.toString());
-            localStorage.setItem(STORAGE_KEYS.ENERGY, this.energy.toString());
-            localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString());
-            localStorage.setItem(STORAGE_KEYS.WALLET_CONNECTED, this.walletConnected.toString());
-        } catch (e) {
-            console.warn('Не удалось сохранить данные:', e);
-        }
-    }
-    
-    // Проверка и коррекция значений
-    clampValues() {
-        this.energy = Math.min(CONFIG.MAX_ENERGY, Math.max(0, this.energy));
-        this.coins = Math.max(0, this.coins);
-    }
-    
-    // Обработка тапа
-    handleTap(event) {
         if (this.energy <= 0) {
-            this.ui.showLowEnergyWarning();
+            console.warn('⚠️ Нет энергии!');
+            alert('😴 Дракон устал! Посмотри рекламу для восстановления.');
             return false;
         }
         
-        // Тратим энергию, получаем монеты
-        this.energy = Math.max(0, this.energy - CONFIG.ENERGY_PER_TAP);
-        this.coins += CONFIG.COINS_PER_TAP;
+        this.energy = Math.max(0, this.energy - 1);
+        this.coins += 1;
+        this.totalTaps += 1;
         
-        // Анимации
-        this.ui.animateDragonTap();
+        this.updateStage();
+        this.ui.updateAllUI(this.getState());
+        this.save();
         
-        // Всплывающие очки (если есть координаты тапа)
-        if (event && (event.clientX || event.touches)) {
-            const x = event.clientX || event.touches?.[0]?.clientX;
-            const y = event.clientY || event.touches?.[0]?.clientY;
-            this.ui.showFloatingScore(CONFIG.COINS_PER_TAP, x, y);
-        } else {
-            this.ui.showFloatingScore(CONFIG.COINS_PER_TAP);
-        }
-        
-        // Вибрация
-        const tg = window.Telegram?.WebApp;
-        if (tg?.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('light');
-        }
-        
-        // Обновление UI
-        this.updateAllUI();
-        
-        // Сохранение
-        this.saveToStorage();
-        
+        console.log('✅ Тап обработан, монет:', this.coins);
         return true;
     }
     
-    // Восстановление энергии
-    regenerateEnergy() {
-        if (this.energy < CONFIG.MAX_ENERGY) {
-            this.energy = Math.min(CONFIG.MAX_ENERGY, 
-                                   this.energy + CONFIG.ENERGY_REGEN_AMOUNT);
-            this.updateAllUI();
-            this.saveToStorage();
+    updateStage() {
+        for (let i = CONFIG.EVOLUTION_STAGES.length - 1; i >= 0; i--) {
+            if (this.coins >= CONFIG.EVOLUTION_STAGES[i].threshold) {
+                this.stage = CONFIG.EVOLUTION_STAGES[i];
+                break;
+            }
         }
     }
     
-    // Просмотр рекламы (награда)
+    regenerate() {
+        if (this.energy < this.maxEnergy) {
+            this.energy = Math.min(this.maxEnergy, this.energy + 1);
+            this.ui.updateAllUI(this.getState());
+            this.save();
+        }
+    }
+    
     watchAd() {
-        const tg = window.Telegram?.WebApp;
-        
-        // В реальном проекте здесь вызов рекламного API Telegram
-        const showAdCallback = () => {
-            this.energy = Math.min(CONFIG.MAX_ENERGY, 
-                                   this.energy + CONFIG.AD_REWARD_ENERGY);
-            this.updateAllUI();
-            this.saveToStorage();
-            
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
-        };
-        
-        if (tg?.showPopup) {
-            tg.showPopup({
-                title: '📺 Реклама',
-                message: 'Смотрите рекламу и получите +' + CONFIG.AD_REWARD_ENERGY + ' энергии!',
-                buttons: [
-                    { id: 'watch', type: 'default', text: 'Смотреть' },
-                    { id: 'cancel', type: 'cancel', text: 'Отмена' }
-                ]
-            }, (buttonId) => {
-                if (buttonId === 'watch') {
-                    // Имитация показа рекламы
-                    setTimeout(showAdCallback, 1000);
-                }
-            });
-        } else {
-            // Заглушка для веба
-            if (confirm('Показать рекламу и получить +' + CONFIG.AD_REWARD_ENERGY + ' энергии?')) {
-                showAdCallback();
-            }
+        console.log('📺 Просмотр рекламы...');
+        this.energy = Math.min(this.maxEnergy, this.energy + 15);
+        this.ui.updateAllUI(this.getState());
+        this.save();
+        alert('✅ +15 энергии!');
+    }
+    
+    connectWallet() {
+        console.log('💎 Подключение кошелька...');
+        this.walletConnected = true;
+        this.coins += 100;
+        this.ui.updateAllUI(this.getState());
+        this.save();
+        alert('✅ Кошелёк привязан! +100 монет.');
+    }
+    
+    save() {
+        try {
+            const data = {
+                coins: this.coins,
+                energy: this.energy,
+                totalTaps: this.totalTaps,
+                walletConnected: this.walletConnected,
+                lastUpdate: Date.now()
+            };
+            localStorage.setItem('dragon_game', JSON.stringify(data));
+            console.log('💾 Данные сохранены:', data);
+        } catch (e) {
+            console.error('❌ Ошибка сохранения:', e);
         }
     }
     
-    // Подключение TON кошелька
-    connectTON() {
-        const tg = window.Telegram?.WebApp;
-        
-        const connectCallback = () => {
-            this.walletConnected = true;
-            this.coins += CONFIG.TON_CONNECT_BONUS;
-            this.updateAllUI();
-            this.saveToStorage();
-            
-            if (tg?.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
+    load() {
+        try {
+            const saved = localStorage.getItem('dragon_game');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.coins = data.coins || 0;
+                this.totalTaps = data.totalTaps || 0;
+                this.walletConnected = data.walletConnected || false;
+                
+                // Восстановление энергии
+                const elapsed = Date.now() - (data.lastUpdate || Date.now());
+                const regen = Math.floor(elapsed / CONFIG.ENERGY_REGEN_INTERVAL);
+                this.energy = Math.min(this.maxEnergy, (data.energy || this.maxEnergy) + regen);
+                
+                console.log('📂 Данные загружены:', { coins: this.coins, energy: this.energy });
+            } else {
+                this.energy = this.maxEnergy;
+                console.log('📂 Новый игрок, начальные данные');
             }
-        };
-        
-        if (tg?.showPopup) {
-            tg.showPopup({
-                title: '💎 TON Connect',
-                message: 'Подключите кошелёк Tonkeeper и получите +' + 
-                         CONFIG.TON_CONNECT_BONUS + ' монет!',
-                buttons: [
-                    { id: 'connect', type: 'default', text: 'Подключить' },
-                    { id: 'later', type: 'cancel', text: 'Позже' }
-                ]
-            }, (buttonId) => {
-                if (buttonId === 'connect') {
-                    // Здесь будет реальный TON Connect
-                    setTimeout(connectCallback, 1000);
-                }
-            });
-        } else {
-            if (confirm('Подключить TON кошелёк? (+' + CONFIG.TON_CONNECT_BONUS + ' монет)')) {
-                connectCallback();
-            }
+            this.updateStage();
+        } catch (e) {
+            console.error('❌ Ошибка загрузки:', e);
+            this.energy = this.maxEnergy;
         }
-    }
-    
-    // Обновление всего UI
-    updateAllUI() {
-        this.clampValues();
-        this.ui.updateCoins(this.coins);
-        this.ui.updateEnergy(this.energy, CONFIG.MAX_ENERGY);
-        this.ui.updateEvolutionProgress(this.coins);
-    }
-    
-    // Запуск регенерации
-    startRegeneration() {
-        this.stopRegeneration();
-        this.regenInterval = setInterval(() => {
-            this.regenerateEnergy();
-        }, CONFIG.ENERGY_REGEN_INTERVAL);
-    }
-    
-    // Остановка регенерации
-    stopRegeneration() {
-        if (this.regenInterval) {
-            clearInterval(this.regenInterval);
-            this.regenInterval = null;
-        }
-    }
-    
-    // Инициализация
-    init() {
-        this.updateAllUI();
-        this.startRegeneration();
-    }
-    
-    // Очистка при закрытии
-    destroy() {
-        this.stopRegeneration();
-        this.saveToStorage();
     }
 }
-
-let game;
