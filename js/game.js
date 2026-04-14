@@ -1,3 +1,5 @@
+// ===== Game Logic =====
+
 class Game {
     constructor(uiController) {
         this.ui = uiController;
@@ -30,15 +32,16 @@ class Game {
         
         if (this.energy <= 0) {
             console.warn('⚠️ Нет энергии!');
-            alert('😴 Дракон устал! Посмотри рекламу для восстановления.');
+            this.ui.showLowEnergyWarning();
             return false;
         }
         
-        this.energy = Math.max(0, this.energy - 1);
-        this.coins += 1;
+        this.energy = Math.max(0, this.energy - CONFIG.ENERGY_PER_TAP);
+        this.coins += CONFIG.COINS_PER_TAP;
         this.totalTaps += 1;
         
         this.updateStage();
+        this.ui.animateTap();
         this.ui.updateAllUI(this.getState());
         this.save();
         
@@ -57,7 +60,7 @@ class Game {
     
     regenerate() {
         if (this.energy < this.maxEnergy) {
-            this.energy = Math.min(this.maxEnergy, this.energy + 1);
+            this.energy = Math.min(this.maxEnergy, this.energy + CONFIG.ENERGY_REGEN_AMOUNT);
             this.ui.updateAllUI(this.getState());
             this.save();
         }
@@ -65,19 +68,19 @@ class Game {
     
     watchAd() {
         console.log('📺 Просмотр рекламы...');
-        this.energy = Math.min(this.maxEnergy, this.energy + 15);
+        this.energy = Math.min(this.maxEnergy, this.energy + CONFIG.AD_REWARD_ENERGY);
         this.ui.updateAllUI(this.getState());
         this.save();
-        alert('✅ +15 энергии!');
+        alert('✅ +' + CONFIG.AD_REWARD_ENERGY + ' энергии!');
     }
     
     connectWallet() {
         console.log('💎 Подключение кошелька...');
         this.walletConnected = true;
-        this.coins += 100;
+        this.coins += CONFIG.TON_CONNECT_BONUS;
         this.ui.updateAllUI(this.getState());
         this.save();
-        alert('✅ Кошелёк привязан! +100 монет.');
+        alert('✅ Кошелёк привязан! +' + CONFIG.TON_CONNECT_BONUS + ' монет.');
     }
     
     save() {
@@ -90,7 +93,7 @@ class Game {
                 lastUpdate: Date.now()
             };
             localStorage.setItem('dragon_game', JSON.stringify(data));
-            console.log('💾 Данные сохранены:', data);
+            console.log('💾 Данные сохранены');
         } catch (e) {
             console.error('❌ Ошибка сохранения:', e);
         }
@@ -110,10 +113,10 @@ class Game {
                 const regen = Math.floor(elapsed / CONFIG.ENERGY_REGEN_INTERVAL);
                 this.energy = Math.min(this.maxEnergy, (data.energy || this.maxEnergy) + regen);
                 
-                console.log('📂 Данные загружены:', { coins: this.coins, energy: this.energy });
+                console.log('📂 Данные загружены');
             } else {
                 this.energy = this.maxEnergy;
-                console.log('📂 Новый игрок, начальные данные');
+                console.log('📂 Новый игрок');
             }
             this.updateStage();
         } catch (e) {
@@ -122,3 +125,6 @@ class Game {
         }
     }
 }
+
+// Глобальная переменная
+let game;
