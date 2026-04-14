@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🐉 DragonEgg · Тапай и зарабатывай</title>
+    
+    <!-- Стили -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>
+                <span class="game-icon">🥚</span>
+                <span>DragonEgg</span>
+            </h1>
+            <p class="game-subtitle">тапай · расти · зарабатывай</p>
+        </header>
+
+        <!-- Кликабельная область с драконом -->
+        <div class="dragon-area" id="tapArea">
+            <div class="dragon-sprite" id="dragonSprite">🥚</div>
+            <div class="tap-hint">
+                <span class="tap-icon">👇</span>
+                <span>ТАПАЙ</span>
+                <span class="tap-icon">👇</span>
+            </div>
+            <div class="floating-score" id="floatingScore"></div>
+        </div>
+
+        <!-- Панель статистики -->
+        <div class="stats-panel">
+            <div class="stat-item coin-stat">
+                <span class="stat-icon">🪙</span>
+                <span class="stat-value" id="coinDisplay">0</span>
+            </div>
+            <div class="stat-item energy-stat">
+                <span class="stat-icon">⚡</span>
+                <div class="energy-bar-container">
+                    <div class="energy-bar-fill" id="energyFill"></div>
+                </div>
+                <span class="stat-value" id="energyText">100/100</span>
+            </div>
+        </div>
+
+        <!-- Прогресс эволюции -->
+        <div class="evolution-progress" id="evolutionSection" style="display: none;">
+            <div class="evolution-label">
+                <span>🐣 Эволюция</span>
+                <span id="evolutionPercent">0%</span>
+            </div>
+            <div class="evolution-bar">
+                <div class="evolution-fill" id="evolutionFill"></div>
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="watchAdBtn">
+                <span class="btn-icon">📺</span>
+                <span>+3 энергии (реклама)</span>
+            </button>
+            <button class="btn btn-secondary" id="connectWalletBtn">
+                <span class="btn-icon">💎</span>
+                <span>Привязать TON</span>
+            </button>
+        </div>
+
+        <footer class="game-footer">
+            <p>🐉 Дракон скоро вылупится!</p>
+        </footer>
+    </div>
+
+    <!-- Скрипты в правильном порядке -->
+    <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
