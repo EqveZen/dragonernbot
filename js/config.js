@@ -30,12 +30,10 @@ const CONFIG = {
     FLOATING_SCORE_DURATION: 300
 };
 
-// Ключи для localStorage (для временного хранения до подключения бэкенда)
+// Ключи для localStorage
 const STORAGE_KEYS = {
     COINS: 'dragonEgg_coins',
     ENERGY: 'dragonEgg_energy',
     LAST_UPDATE: 'dragonEgg_lastUpdate',
     WALLET_CONNECTED: 'dragonEgg_walletConnected'
 };
-
-// Экспорт (если используем модули, но пока работаем в глобальном scope)
