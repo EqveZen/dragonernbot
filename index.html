@@ -3,82 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>🐉 DragonEgg · Тапай и зарабатывай</title>
-    
-    <!-- Стили -->
+    <title>🐉 DragonEgg · MMORPG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    
-    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="game-container">
-        <header class="game-header">
-            <h1>
-                <span class="game-icon">🥚</span>
-                <span>DragonEgg</span>
-            </h1>
-            <p class="game-subtitle">тапай · расти · зарабатывай</p>
-        </header>
-
-        <!-- Кликабельная область с драконом -->
-        <div class="dragon-area" id="tapArea">
-            <div class="dragon-sprite" id="dragonSprite">🥚</div>
-            <div class="tap-hint">
-                <span class="tap-icon">👇</span>
-                <span>ТАПАЙ</span>
-                <span class="tap-icon">👇</span>
+<div class="app">
+    <!-- Верхняя панель -->
+    <header class="header">
+        <div class="profile-row">
+            <div class="avatar" id="playerAvatar">🐉</div>
+            <div class="player-info">
+                <div class="player-name" id="playerName">Искатель</div>
+                <span class="level-badge" id="playerLevel">Ур. 1</span>
             </div>
-            <div class="floating-score" id="floatingScore"></div>
         </div>
-
-        <!-- Панель статистики -->
-        <div class="stats-panel">
-            <div class="stat-item coin-stat">
-                <span class="stat-icon">🪙</span>
-                <span class="stat-value" id="coinDisplay">0</span>
+        <div class="resources">
+            <div class="resource-item">
+                <span class="resource-icon">🪙</span>
+                <span class="resource-value" id="headerCoins">0</span>
             </div>
-            <div class="stat-item energy-stat">
-                <span class="stat-icon">⚡</span>
-                <div class="energy-bar-container">
-                    <div class="energy-bar-fill" id="energyFill"></div>
+            <div class="resource-item">
+                <span class="resource-icon">⚡</span>
+                <span class="resource-value" id="headerEnergy">100</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контент (меняется через табы) -->
+    <main class="main-content">
+        <!-- Главная (Фарм) -->
+        <div id="tab-home" class="tab-content active">
+            <div class="dragon-arena">
+                <div class="dragon-card">
+                    <div class="dragon-sprite-large" id="dragonSprite">🥚</div>
+                    <div class="dragon-name" id="dragonName">Яйцо дракона</div>
+                    <div class="tap-button" id="tapArea">⚔️ ТАПАТЬ ⚔️</div>
+                    <div class="energy-bar-large">
+                        <div class="energy-fill-large" id="energyFill" style="width:100%"></div>
+                    </div>
+                    <div class="action-row">
+                        <button class="mmo-button" id="watchAdBtn">📺 +Энергия</button>
+                        <button class="mmo-button" id="connectWalletBtn">💎 TON</button>
+                    </div>
                 </div>
-                <span class="stat-value" id="energyText">100/100</span>
             </div>
         </div>
 
-        <!-- Прогресс эволюции -->
-        <div class="evolution-progress" id="evolutionSection" style="display: none;">
-            <div class="evolution-label">
-                <span>🐣 Эволюция</span>
-                <span id="evolutionPercent">0%</span>
-            </div>
-            <div class="evolution-bar">
-                <div class="evolution-fill" id="evolutionFill"></div>
+        <!-- Профиль -->
+        <div id="tab-profile" class="tab-content">
+            <div class="profile-stats">
+                <h2>⚔️ Профиль героя</h2>
+                <div class="stat-row"><span>Всего монет:</span> <span id="profileCoins">0</span></div>
+                <div class="stat-row"><span>Всего тапов:</span> <span id="totalTaps">0</span></div>
+                <div class="stat-row"><span>Уровень дракона:</span> <span id="dragonStageProfile">Яйцо</span></div>
+                <div class="stat-row"><span>Кошелёк TON:</span> <span id="walletStatus">Не привязан</span></div>
             </div>
         </div>
 
-        <!-- Кнопки действий -->
-        <div class="action-buttons">
-            <button class="btn btn-primary" id="watchAdBtn">
-                <span class="btn-icon">📺</span>
-                <span>+3 энергии (реклама)</span>
-            </button>
-            <button class="btn btn-secondary" id="connectWalletBtn">
-                <span class="btn-icon">💎</span>
-                <span>Привязать TON</span>
-            </button>
+        <!-- Рефералы -->
+        <div id="tab-referral" class="tab-content">
+            <div class="referral-block">
+                <h2>🤝 Реферальная система</h2>
+                <p style="margin-bottom:16px;">Приглашай друзей и получай 10% от их фарма!</p>
+                <div style="background:#1e1b1a; padding:14px; border-radius:20px; word-break:break-all;">
+                    <span>Твоя ссылка:</span><br>
+                    <code id="refLink" style="color:#f5d78c;">https://t.me/dragonern_bot?start=ref123</code>
+                </div>
+                <button class="mmo-button" style="margin-top:16px; width:100%;" id="copyRefBtn">📋 Скопировать</button>
+                <div style="margin-top:24px;">
+                    <div class="stat-row"><span>Приглашено друзей:</span> <span id="refCount">0</span></div>
+                    <div class="stat-row"><span>Заработано с рефералов:</span> <span id="refEarned">0 🪙</span></div>
+                </div>
+            </div>
         </div>
 
-        <footer class="game-footer">
-            <p>🐉 Дракон скоро вылупится!</p>
-        </footer>
-    </div>
+        <!-- Задания -->
+        <div id="tab-quests" class="tab-content">
+            <div class="quest-list">
+                <h2>📜 Задания</h2>
+                <div class="quest-item">
+                    <span>🥚 Накликать 100 монет</span>
+                    <span id="quest1Progress">0/100</span>
+                    <button class="mmo-button" style="padding:6px 12px;" disabled>Выполнить</button>
+                </div>
+                <div class="quest-item">
+                    <span>📺 Посмотреть 3 рекламы</span>
+                    <span id="quest2Progress">0/3</span>
+                    <button class="mmo-button" style="padding:6px 12px;" disabled>Выполнить</button>
+                </div>
+            </div>
+        </div>
+    </main>
 
-    <!-- Скрипты в правильном порядке -->
-    <script src="js/config.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Нижняя навигация -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="home"><span class="nav-icon">🐉</span><span>Фарм</span></button>
+        <button class="nav-item" data-tab="profile"><span class="nav-icon">👤</span><span>Профиль</span></button>
+        <button class="nav-item" data-tab="referral"><span class="nav-icon">🤝</span><span>Друзья</span></button>
+        <button class="nav-item" data-tab="quests"><span class="nav-icon">📜</span><span>Квесты</span></button>
+    </nav>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
