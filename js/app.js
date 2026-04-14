@@ -15,6 +15,9 @@
         console.warn('⚠️ Telegram WebApp не найден (работаем в браузере)');
     }
     
+    // Переменная для интервала регенерации
+    let regenInterval = null;
+    
     // Ждём полной загрузки DOM
     function initApp() {
         console.log('📱 Инициализация UI...');
@@ -32,12 +35,12 @@
         if (tapArea) {
             tapArea.addEventListener('click', (e) => {
                 console.log('🖱️ Тап');
-                game.handleTap();
+                if (window.game) window.game.handleTap();
             });
             tapArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 console.log('👆 Тач');
-                game.handleTap();
+                if (window.game) window.game.handleTap();
             }, { passive: false });
             console.log('✅ Обработчик тапов привязан');
         } else {
@@ -45,12 +48,16 @@
         }
         
         if (watchAdBtn) {
-            watchAdBtn.addEventListener('click', () => game.watchAd());
+            watchAdBtn.addEventListener('click', () => {
+                if (window.game) window.game.watchAd();
+            });
             console.log('✅ Обработчик рекламы привязан');
         }
         
         if (connectWalletBtn) {
-            connectWalletBtn.addEventListener('click', () => game.connectWallet());
+            connectWalletBtn.addEventListener('click', () => {
+                if (window.game) window.game.connectWallet();
+            });
             console.log('✅ Обработчик TON привязан');
         }
         
@@ -67,16 +74,28 @@
             });
         }
         
-        // Регенерация энергии
-        setInterval(() => {
-            if (window.game) game.regenerate();
+        // Запускаем регенерацию энергии ТОЛЬКО после создания game
+        if (regenInterval) clearInterval(regenInterval);
+        regenInterval = setInterval(() => {
+            if (window.game && typeof window.game.regenerate === 'function') {
+                window.game.regenerate();
+            }
         }, CONFIG.ENERGY_REGEN_INTERVAL);
-        console.log('🔄 Регенерация энергии запущена');
+        console.log('🔄 Регенерация энергии запущена (интервал ' + CONFIG.ENERGY_REGEN_INTERVAL + 'мс)');
         
         // Установка имени из Telegram
         if (tg?.initDataUnsafe?.user?.first_name) {
             const playerName = document.getElementById('playerName');
             if (playerName) playerName.textContent = tg.initDataUnsafe.user.first_name;
+        }
+        
+        // Установка реферальной ссылки (если есть параметр start)
+        if (tg?.initDataUnsafe?.start_param) {
+            const refLink = document.getElementById('refLink');
+            if (refLink) {
+                const baseUrl = 'https://t.me/dragonern_bot';
+                refLink.textContent = `${baseUrl}?start=${tg.initDataUnsafe.start_param}`;
+            }
         }
         
         console.log('✅ DragonEgg успешно запущен!');
@@ -88,4 +107,13 @@
     } else {
         initApp();
     }
+    
+    // Очистка интервала при выгрузке страницы
+    window.addEventListener('beforeunload', () => {
+        if (regenInterval) {
+            clearInterval(regenInterval);
+            regenInterval = null;
+        }
+    });
+    
 })();
